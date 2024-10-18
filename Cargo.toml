@@ -3,8 +3,13 @@ members = ["spidermonkey-sys"]
 
 [package]
 name = "ateles"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+license = "Apache-2.0"
+authors = ["Federico Maria Morrone <contact@morrone.dev>"]
+readme = "README.md"
+repository = "https://github.com/morr0ne/ateles"
+description = "High level bindings to spidermonkey"
 
 [profile.release]
 lto = true
