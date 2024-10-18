@@ -6,4 +6,13 @@ name = "ateles"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.bloat]
+inherits = "release"
+strip = false
+
 [dependencies]
