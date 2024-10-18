@@ -28,3 +28,4 @@ inherits = "release"
 strip = false
 
 [dependencies]
+spidermonkey-sys = { version = "0.0.1", path = "spidermonkey-sys" }

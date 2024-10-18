@@ -5,6 +5,9 @@ version = 3
 [[package]]
 name = "ateles"
 version = "0.0.1"
+dependencies = [
+ "spidermonkey-sys",
+]
 
 [[package]]
 name = "spidermonkey-sys"
