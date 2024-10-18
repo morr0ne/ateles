@@ -5,3 +5,7 @@ version = 3
 [[package]]
 name = "ateles"
 version = "0.1.0"
+
+[[package]]
+name = "spidermonkey-sys"
+version = "0.1.0"

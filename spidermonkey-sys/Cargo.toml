@@ -1,8 +1,5 @@
-[workspace]
-members = ["spidermonkey-sys"]
-
 [package]
-name = "ateles"
+name = "spidermonkey-sys"
 version = "0.1.0"
 edition = "2021"
 
