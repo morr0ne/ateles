@@ -1,5 +1,6 @@
 [workspace]
 members = ["spidermonkey-sys"]
+exclude = ["gen"]
 
 [workspace.package]
 edition = "2021"
@@ -29,3 +30,6 @@ strip = false
 
 [dependencies]
 spidermonkey-sys = { version = "0.0.1", path = "spidermonkey-sys" }
+
+[dev-dependencies]
+anyhow = "1.0.90"
