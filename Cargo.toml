@@ -1,15 +1,22 @@
 [workspace]
 members = ["spidermonkey-sys"]
 
-[package]
-name = "ateles"
-version = "0.0.1"
+[workspace.package]
 edition = "2021"
 license = "Apache-2.0"
 authors = ["Federico Maria Morrone <contact@morrone.dev>"]
 readme = "README.md"
 repository = "https://github.com/morr0ne/ateles"
+
+[package]
+name = "ateles"
+version = "0.0.1"
 description = "High level bindings to spidermonkey"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [profile.release]
 lto = true
