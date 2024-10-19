@@ -14,6 +14,7 @@ fn main() -> Result<()> {
         .compile("spidermonkey-sys");
 
     println!("cargo:rerun-if-changed=src/lib.rs");
+    println!("cargo:rerun-if-changed=src/spidermonkey.hpp");
 
     pkg_config::probe_library("mozjs-128")?;
 
