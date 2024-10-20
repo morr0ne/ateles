@@ -9,10 +9,10 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-autocxx = "0.27.0"
+autocxx = { git = "https://github.com/morr0ne/autocxx.git", branch = "update-deps", version = "0.27.0" }
 cxx = { version = "1.0.129", features = ["c++20"] }
 
 [build-dependencies]
 anyhow = "1.0.90"
-autocxx-build = "0.27.0"
+autocxx-build = { git = "https://github.com/morr0ne/autocxx.git", branch = "update-deps" }
 pkg-config = "0.3.31"
