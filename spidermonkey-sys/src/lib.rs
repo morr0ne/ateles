@@ -11,7 +11,7 @@ include_cpp! {
     generate!("JS::RealmOptions")
     generate_pod!("JSClass")
     generate!("JSCLASS_GLOBAL_FLAGS")
-    generate!("JS::DefaultGlobalClassOps")
+    // generate!("JS::DefaultGlobalClassOps")
     // generate!("JS_NewEnumerateStandardClasses")
     // generate!("JS_ResolveStandardClass")
     // generate!("JS_MayResolveStandardClass")
