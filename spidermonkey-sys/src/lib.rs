@@ -1,36 +1,50 @@
-use autocxx::prelude::*;
+pub mod sys;
 
-include_cpp! {
-    #include "spidermonkey.hpp"
-    // safety!(unsafe_ffi)
-    generate!("JS_Init")
-    generate!("JS_NewContext")
-    generate!("JS::DefaultHeapMaxBytes")
-    generate!("JS_DestroyContext")
-    generate!("JS_ShutDown")
-    generate!("JS::RealmOptions")
-    generate_pod!("JSClass")
-    generate!("JSCLASS_GLOBAL_FLAGS")
-    // generate!("JS::DefaultGlobalClassOps")
-    // generate!("JS_NewEnumerateStandardClasses")
-    // generate!("JS_ResolveStandardClass")
-    // generate!("JS_MayResolveStandardClass")
-    // generate!("JS_GlobalObjectTraceHook")
+use cxx::{type_id, ExternType};
+
+unsafe impl ExternType for sys::root::JSContext {
+    type Id = type_id!("JSContext");
+
+    type Kind = cxx::kind::Opaque;
 }
 
-unsafe impl Sync for JSClass {}
+unsafe impl ExternType for sys::root::JSRuntime {
+    type Id = type_id!("JSRuntime");
+
+    type Kind = cxx::kind::Opaque;
+}
+
+unsafe impl ExternType for sys::root::JSClass {
+    type Id = type_id!("JSClass");
+
+    type Kind = cxx::kind::Trivial;
+}
+
+#[cxx::bridge]
+mod ffi {
+
+    extern "C++" {
+        include!("spidermonkey-sys/src/spidermonkey.hpp");
+
+        type JSContext = crate::sys::root::JSContext;
+        type JSRuntime = crate::sys::root::JSRuntime;
+        type JSClass = crate::sys::root::JSClass;
+
+        unsafe fn JS_Init() -> bool;
+    }
+
+    unsafe extern "C++" {
+        include!("spidermonkey-sys/src/spidermonkey.hpp");
+
+        fn realm_options_new() -> UniquePtr<RealmOptions>;
+    }
+
+    #[namespace = "JS"]
+    extern "C++" {
+        include!("spidermonkey-sys/src/spidermonkey.hpp");
+
+        type RealmOptions;
+    }
+}
 
 pub use ffi::*;
-
-// const JSClassOps JS::DefaultGlobalClassOps = {
-//     nullptr,                         // addProperty
-//     nullptr,                         // delProperty
-//     nullptr,                         // enumerate
-//     JS_NewEnumerateStandardClasses,  // newEnumerate
-//     JS_ResolveStandardClass,         // resolve
-//     JS_MayResolveStandardClass,      // mayResolve
-//     nullptr,                         // finalize
-//     nullptr,                         // call
-//     nullptr,                         // construct
-//     JS_GlobalObjectTraceHook,        // trace
-// };
