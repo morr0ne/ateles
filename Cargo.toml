@@ -31,4 +31,4 @@ strip = false
 spidermonkey-sys = { version = "0.0.1", path = "spidermonkey-sys" }
 
 [dev-dependencies]
-anyhow = "1.0.90"
+anyhow = "1.0.91"
