@@ -1,3 +1,8 @@
+extern crate encoding_c;
+extern crate encoding_c_mem;
+extern crate icu_capi;
+extern crate libz_sys;
+
 pub mod sys;
 
 use cxx::{type_id, ExternType};
@@ -48,3 +53,8 @@ mod ffi {
 }
 
 pub use ffi::*;
+
+#[no_mangle]
+pub extern "C" fn install_rust_hooks() {
+    // FIXME: figure out if we need to do something in here
+}

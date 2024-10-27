@@ -1,0 +1,10 @@
+--- js/src/build/moz.build
++++ js/src/build/moz.build
+@@ -39,6 +39,7 @@
+         SYMBOLS_FILE = "!symverscript"
+ else:
+     Library("js")
++    USE_LIBS += ["mozglue"]
+ 
+ FORCE_STATIC_LIB = True
+ STATIC_LIBRARY_NAME = "js_static"
