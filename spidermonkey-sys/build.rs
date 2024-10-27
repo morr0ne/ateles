@@ -1,6 +1,147 @@
-use std::path::PathBuf;
+use std::{
+    fs::{self, File},
+    path::{Path, PathBuf},
+    process::Command,
+    thread::available_parallelism,
+};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
+use tar::Archive;
+use xz2::read::XzDecoder;
+
+fn main() -> Result<()> {
+    println!("cargo:rerun-if-changed=src/spidermonkey.hpp");
+    println!("cargo:rerun-if-changed=src/spidermonkey.cpp");
+
+    let monkey_path = build_spidermonkey()?;
+
+    generate_bindings(&monkey_path)?;
+
+    cxx_build::bridge("src/lib.rs")
+        .file("src/spidermonkey.hpp")
+        .file("src/spidermonkey.cpp")
+        .cpp(true)
+        .std("c++20")
+        .flag("-w")
+        .flag("-fPIC")
+        .flag("-fno-rtti")
+        .flag("-fno-exceptions")
+        .flag("-DDEBUG=1")
+        .include(monkey_path.join("dist/include"))
+        .compile("spidermonkey-sys");
+
+    println!(
+        "cargo:rustc-link-search=native={}",
+        monkey_path.join("js/src/build").display()
+    );
+    println!("cargo:rustc-link-lib=static=js_static");
+
+    Ok(())
+}
+
+const SOURCE_URL: &str = "https://ftp.mozilla.org/pub/firefox/releases/128.3.1esr/source/firefox-128.3.1esr.source.tar.xz";
+const FIREFOX_VERSION: &str = "128.3.1";
+const CHECKSUM: &str = "3fa5ead3fb640dbf3253ba3d3d59550d99d1646a39144b9881a9f8897f18f650";
+
+fn build_spidermonkey() -> Result<PathBuf> {
+    let out_dir = build_dir();
+
+    let build_path = out_dir.join("monkey-build");
+
+    if out_dir.join(".monkey-ok").exists() {
+        return Ok(build_path);
+    }
+
+    let download_path = out_dir.join("firefox.tar.xz");
+
+    let already_downloaded = download_path.exists()
+        && blake3::hash(&fs::read(&download_path)?)
+            .to_hex()
+            .to_string()
+            == CHECKSUM;
+
+    if !already_downloaded {
+        if !Command::new("curl")
+            .arg("-L")
+            .arg("-o")
+            .arg(&download_path)
+            .arg(SOURCE_URL)
+            .status()?
+            .success()
+        {
+            bail!("Failed to download firefox source")
+        }
+    }
+
+    Archive::new(XzDecoder::new(File::open(download_path)?)).unpack(&out_dir)?;
+
+    let source_path = out_dir.join(format!("firefox-{FIREFOX_VERSION}"));
+
+    for entry in fs::read_dir("patches")? {
+        let path = entry?.path().canonicalize()?;
+
+        if !Command::new("patch")
+            .arg("-p0")
+            .arg("--input")
+            .arg(path)
+            .current_dir(&source_path)
+            .status()?
+            .success()
+        {
+            bail!("Failed to patch spidermonkey")
+        }
+    }
+
+    fs::create_dir_all(&build_path)?;
+
+    if !Command::new(source_path.join("js/src/configure"))
+        .args([
+            "--disable-jemalloc",
+            "--disable-js-shell",
+            "--disable-shared-js",
+            "--disable-export-js",
+            "--disable-tests",
+            "--enable-debug",
+        ])
+        .current_dir(&build_path)
+        .status()?
+        .success()
+    {
+        bail!("Failed to configure spidermonkey")
+    }
+
+    if !Command::new("make")
+        .arg("-j")
+        .arg(available_parallelism().unwrap().to_string())
+        .current_dir(&build_path)
+        .status()?
+        .success()
+    {
+        bail!("Failed to configure spidermonkey")
+    }
+
+    File::create(out_dir.join(".monkey-ok"))?;
+
+    Ok(build_path)
+}
+
+// Adapted from from rusty_v8
+fn build_dir() -> PathBuf {
+    let cwd = std::env::current_dir().unwrap();
+
+    let out_dir = std::env::var_os("OUT_DIR").unwrap();
+    let out_dir_abs = cwd.join(out_dir);
+
+    // This would be target/debug or target/release
+    out_dir_abs
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .to_path_buf()
+}
 
 const ALLOWLIST_TYPES: &[&str] = &[
     "JSClass",
@@ -52,12 +193,12 @@ const THREAD_SAFE_TYPES: &[&str] = &["JSClass"];
 
 const CXX_TYPES: &[&str] = &["RealmOptions"];
 
-fn main() -> Result<()> {
+fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
     let mut bindings_builder = bindgen::Builder::default()
         .header("src/spidermonkey.hpp")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .clang_args([
-            "-I/usr/include/mozjs-128",
+            format!("-I{}", path.as_ref().join("dist/include").display()).as_str(),
             "-std=c++20",
             "-w",
             "-x",
@@ -101,22 +242,6 @@ fn main() -> Result<()> {
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .context("Couldn't write bindings!")?;
-
-    cxx_build::bridge("src/lib.rs")
-        .file("src/spidermonkey.hpp")
-        .file("src/spidermonkey.cpp")
-        .flag("-DDEBUG=1")
-        .cpp(true)
-        .std("c++20")
-        .flag("-w")
-        .include("/usr/include/mozjs-128")
-        .compile("spidermonkey-sys");
-
-    // Link to spidermonkey. The shared library is named mozjs-<version>
-    // FIXME: Build and link statically
-    pkg_config::Config::new()
-        .probe("mozjs-128")
-        .context("Failed to link mozjs")?;
 
     Ok(())
 }

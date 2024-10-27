@@ -10,9 +10,15 @@ repository.workspace = true
 
 [dependencies]
 cxx = { version = "1.0.129", features = ["c++20"] }
+encoding_c = "0.9.8"
+encoding_c_mem = "0.2.6"
+icu_capi = "1.5.1"
+libz-sys = { version = "1.1.20", default-features = false, features = ["zlib-ng"] }
 
 [build-dependencies]
 anyhow = "1.0.91"
 bindgen = "0.70.1"
+blake3 = "1.5.4"
 cxx-build = "1.0.129"
-pkg-config = "0.3.31"
+tar = "0.4.42"
+xz2 = "0.1.7"
