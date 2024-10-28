@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::{bail, Context, Result};
+use bindgen::CodegenConfig;
 use tar::Archive;
 use xz2::read::XzDecoder;
 
@@ -157,7 +158,7 @@ const ALLOWLIST_TYPES: &[&str] = &[
     "JS::SelfHostedWriter",
     "JS::Value",
     "JS::Realm",
-    // "JS::CompileOptions",
+    "JS::CompileOptions",
     "js::ClassSpec",
     "js::ClassExtension",
     "js::ObjectOps",
@@ -170,6 +171,7 @@ const OPAQUE_TYPES: &[&str] = &[
     "JSContext",
     "JSRuntime",
     "JSPrincipals",
+    "JS::CompileOptions",
     "js::ClassSpec",
     "js::ClassExtension",
     "js::ObjectOps",
@@ -194,7 +196,13 @@ const THREAD_SAFE_TYPES: &[&str] = &["JSClass"];
 const CXX_TYPES: &[&str] = &["RealmOptions"];
 
 fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
+    let codegen_config = CodegenConfig::default()
+        - CodegenConfig::CONSTRUCTORS
+        - CodegenConfig::DESTRUCTORS
+        - CodegenConfig::METHODS;
+
     let mut bindings_builder = bindgen::Builder::default()
+        .with_codegen_config(codegen_config)
         .header("src/spidermonkey.hpp")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .clang_args([
