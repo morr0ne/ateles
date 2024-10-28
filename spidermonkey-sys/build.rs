@@ -21,7 +21,7 @@ fn main() -> Result<()> {
     cxx_build::bridges([
         "src/bindings/js.rs",
         "src/bindings/JS.rs",
-        "src/bindings/mod.rs",
+        "src/bindings/root.rs",
     ])
     .file("src/spidermonkey.hpp")
     .file("src/spidermonkey.cpp")
@@ -181,10 +181,8 @@ const ALLOWLIST_FUNCTION: &[&str] = &[
 const THREAD_SAFE_TYPES: &[&str] = &["JSClass"];
 
 fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
-    let codegen_config = CodegenConfig::default()
-        - CodegenConfig::CONSTRUCTORS
-        - CodegenConfig::DESTRUCTORS
-        - CodegenConfig::METHODS;
+    let codegen_config =
+        CodegenConfig::default() - CodegenConfig::CONSTRUCTORS - CodegenConfig::DESTRUCTORS;
 
     let mut bindings_builder = bindgen::Builder::default()
         .with_codegen_config(codegen_config)
