@@ -146,10 +146,6 @@ fn build_dir() -> PathBuf {
 
 const ALLOWLIST_TYPES: &[&str] = &[
     "JSClass",
-    "JSClassOps",
-    "JSContext",
-    "JSRuntime",
-    "JSPrincipals",
     "JSObject",
     "JSAutoRealm",
     "JSScript",
@@ -158,23 +154,8 @@ const ALLOWLIST_TYPES: &[&str] = &[
     "JS::SelfHostedWriter",
     "JS::Value",
     "JS::Realm",
-    "JS::CompileOptions",
-    "js::ClassSpec",
-    "js::ClassExtension",
-    "js::ObjectOps",
     "js::GenericPrinter",
     "js::JSONPrinter",
-];
-
-const OPAQUE_TYPES: &[&str] = &[
-    "JSClassOps",
-    "JSContext",
-    "JSRuntime",
-    "JSPrincipals",
-    "JS::CompileOptions",
-    "js::ClassSpec",
-    "js::ClassExtension",
-    "js::ObjectOps",
 ];
 
 const ALLOWLIST_VARS: &[&str] = &[
@@ -188,12 +169,24 @@ const ALLOWLIST_FUNCTION: &[&str] = &[
     "JS_DestroyContext",
     "JS_ShutDown",
     "JS_NewGlobalObject",
+    "JS::EnterRealm",
+    "JS::LeaveRealm",
     "JS::InitSelfHostedCode",
 ];
 
 const THREAD_SAFE_TYPES: &[&str] = &["JSClass"];
 
-const CXX_TYPES: &[&str] = &["RealmOptions"];
+const CXX_TYPES: &[(&str, &str)] = &[
+    ("", "JSClassOps"),
+    ("", "JSContext"),
+    ("", "JSRuntime"),
+    ("", "JSPrincipals"),
+    ("::JS", "CompileOptions"),
+    ("::JS", "RealmOptions"),
+    ("::js", "ClassSpec"),
+    ("::js", "ClassExtension"),
+    ("::js", "ObjectOps"),
+];
 
 fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
     let codegen_config = CodegenConfig::default()
@@ -220,10 +213,6 @@ fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
         bindings_builder = bindings_builder.allowlist_type(ty)
     }
 
-    for ty in OPAQUE_TYPES {
-        bindings_builder = bindings_builder.opaque_type(ty)
-    }
-
     for var in ALLOWLIST_VARS {
         bindings_builder = bindings_builder.allowlist_var(var)
     }
@@ -237,9 +226,9 @@ fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
             bindings_builder.raw_line(format!("unsafe impl Sync for root::{ty} {{}}"));
     }
 
-    for ty in CXX_TYPES {
-        bindings_builder =
-            bindings_builder.module_raw_line("root::JS", format!("pub use crate::{ty};"));
+    for (path, ty) in CXX_TYPES {
+        bindings_builder = bindings_builder
+            .module_raw_line(format!("root{path}"), format!("pub use crate::{ty};"));
     }
 
     let bindings = bindings_builder

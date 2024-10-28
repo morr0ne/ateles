@@ -48,7 +48,9 @@ fn main() -> Result<()> {
             &*options,
         );
 
-        // let ar = JSAutoRealm::new(cx, global);
+        let ar = JSAutoRealm::new(cx, global);
+
+        drop(ar);
 
         JS_DestroyContext(cx);
         JS_ShutDown();
