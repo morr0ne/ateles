@@ -18,7 +18,7 @@ fn main() -> Result<()> {
 
     generate_bindings(&monkey_path)?;
 
-    cxx_build::bridge("src/lib.rs")
+    cxx_build::bridge("src/bindings.rs")
         .file("src/spidermonkey.hpp")
         .file("src/spidermonkey.cpp")
         .cpp(true)
@@ -176,18 +176,6 @@ const ALLOWLIST_FUNCTION: &[&str] = &[
 
 const THREAD_SAFE_TYPES: &[&str] = &["JSClass"];
 
-const CXX_TYPES: &[(&str, &str)] = &[
-    ("", "JSClassOps"),
-    ("", "JSContext"),
-    ("", "JSRuntime"),
-    ("", "JSPrincipals"),
-    ("::JS", "CompileOptions"),
-    ("::JS", "RealmOptions"),
-    ("::js", "ClassSpec"),
-    ("::js", "ClassExtension"),
-    ("::js", "ObjectOps"),
-];
-
 fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
     let codegen_config = CodegenConfig::default()
         - CodegenConfig::CONSTRUCTORS
@@ -226,10 +214,14 @@ fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
             bindings_builder.raw_line(format!("unsafe impl Sync for root::{ty} {{}}"));
     }
 
-    for (path, ty) in CXX_TYPES {
-        bindings_builder = bindings_builder
-            .module_raw_line(format!("root{path}"), format!("pub use crate::{ty};"));
-    }
+    bindings_builder =
+        bindings_builder.module_raw_line("root", "pub use crate::bindings::root::*;");
+
+    bindings_builder =
+        bindings_builder.module_raw_line("root::JS", "pub use crate::bindings::JS::*;");
+
+    bindings_builder =
+        bindings_builder.module_raw_line("root::js", "pub use crate::bindings::js::*;");
 
     let bindings = bindings_builder
         .generate()
