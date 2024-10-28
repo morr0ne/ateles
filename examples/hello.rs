@@ -2,12 +2,8 @@ use std::ptr::{null, null_mut};
 
 use anyhow::{bail, Result};
 use spidermonkey_sys::{
-    realm_options_new,
-    sys::root::{
-        JSAutoRealm, JSClass, JS_DestroyContext, JS_NewContext, JS_NewGlobalObject, JS_ShutDown,
-        JS, JSCLASS_GLOBAL_FLAGS,
-    },
-    JS_Init,
+    JSAutoRealm, JSClass, JS_DestroyContext, JS_Init, JS_NewContext, JS_NewGlobalObject,
+    JS_ShutDown, JS, JSCLASS_GLOBAL_FLAGS,
 };
 
 static GLOBAL_CLASS: JSClass = JSClass {
@@ -37,7 +33,7 @@ fn main() -> Result<()> {
             bail!("Failed to init self hosted code")
         }
 
-        let options = realm_options_new();
+        let options = JS::realm_options_new();
 
         // FIXME: This should be rooted
         let global = JS_NewGlobalObject(
