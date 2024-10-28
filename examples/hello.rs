@@ -40,11 +40,13 @@ fn main() -> Result<()> {
             cx,
             &GLOBAL_CLASS,
             null_mut(),
-            JS::OnNewGlobalHookOption_FireOnNewGlobalHook,
+            JS::OnNewGlobalHookOption::FireOnNewGlobalHook,
             &*options,
         );
 
         let ar = JSAutoRealm::new(cx, global);
+
+        let compile_options = JS::compile_options_new(cx);
 
         drop(ar);
 
