@@ -4,10 +4,10 @@ use anyhow::{bail, Result};
 use spidermonkey_sys::{
     realm_options_new,
     sys::root::{
-        JSAutoRealm, JS_DestroyContext, JS_NewContext, JS_NewGlobalObject, JS_ShutDown, JS,
-        JSCLASS_GLOBAL_FLAGS,
+        JSAutoRealm, JSClass, JS_DestroyContext, JS_NewContext, JS_NewGlobalObject, JS_ShutDown,
+        JS, JSCLASS_GLOBAL_FLAGS,
     },
-    JSClass, JS_Init,
+    JS_Init,
 };
 
 static GLOBAL_CLASS: JSClass = JSClass {
@@ -20,6 +20,8 @@ static GLOBAL_CLASS: JSClass = JSClass {
 };
 
 fn main() -> Result<()> {
+    let code = "(`hello world, it is ${new Date()}`)";
+
     unsafe {
         if !JS_Init() {
             bail!("Failed to init runtime")
@@ -46,7 +48,7 @@ fn main() -> Result<()> {
             &*options,
         );
 
-        let ar = JSAutoRealm::new(cx, global);
+        // let ar = JSAutoRealm::new(cx, global);
 
         JS_DestroyContext(cx);
         JS_ShutDown();
