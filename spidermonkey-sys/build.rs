@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::{bail, Context, Result};
-use bindgen::CodegenConfig;
+use bindgen::{CodegenConfig, EnumVariation};
 use tar::Archive;
 use xz2::read::XzDecoder;
 
@@ -18,18 +18,22 @@ fn main() -> Result<()> {
 
     generate_bindings(&monkey_path)?;
 
-    cxx_build::bridge("src/bindings.rs")
-        .file("src/spidermonkey.hpp")
-        .file("src/spidermonkey.cpp")
-        .cpp(true)
-        .std("c++20")
-        .flag("-w")
-        .flag("-fPIC")
-        .flag("-fno-rtti")
-        .flag("-fno-exceptions")
-        .flag("-DDEBUG=1")
-        .include(monkey_path.join("dist/include"))
-        .compile("spidermonkey-sys");
+    cxx_build::bridges([
+        "src/bindings/js.rs",
+        "src/bindings/JS.rs",
+        "src/bindings/mod.rs",
+    ])
+    .file("src/spidermonkey.hpp")
+    .file("src/spidermonkey.cpp")
+    .cpp(true)
+    .std("c++20")
+    .flag("-w")
+    .flag("-fPIC")
+    .flag("-fno-rtti")
+    .flag("-fno-exceptions")
+    .flag("-DDEBUG=1")
+    .include(monkey_path.join("dist/include"))
+    .compile("spidermonkey-sys");
 
     println!(
         "cargo:rustc-link-search=native={}",
@@ -213,6 +217,10 @@ fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
         bindings_builder =
             bindings_builder.raw_line(format!("unsafe impl Sync for root::{ty} {{}}"));
     }
+
+    bindings_builder = bindings_builder.default_enum_style(EnumVariation::Rust {
+        non_exhaustive: true,
+    });
 
     bindings_builder =
         bindings_builder.module_raw_line("root", "pub use crate::bindings::root::*;");
