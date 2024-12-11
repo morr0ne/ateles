@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::{bail, Context, Result};
 use bindgen::{CodegenConfig, EnumVariation};
+use sha2::{Digest, Sha512};
 use tar::Archive;
 use xz2::read::XzDecoder;
 
@@ -31,7 +32,7 @@ fn main() -> Result<()> {
     .flag("-fPIC")
     .flag("-fno-rtti")
     .flag("-fno-exceptions")
-    .flag("-DDEBUG=1")
+    // .flag("-DDEBUG=1")
     .include(monkey_path.join("dist/include"))
     .compile("spidermonkey-sys");
 
@@ -44,9 +45,9 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-const SOURCE_URL: &str = "https://ftp.mozilla.org/pub/firefox/releases/128.3.1esr/source/firefox-128.3.1esr.source.tar.xz";
-const FIREFOX_VERSION: &str = "128.3.1";
-const CHECKSUM: &str = "3fa5ead3fb640dbf3253ba3d3d59550d99d1646a39144b9881a9f8897f18f650";
+const SOURCE_URL: &str = "https://ftp.mozilla.org/pub/firefox/releases/128.5.1esr/source/firefox-128.5.1esr.source.tar.xz";
+const FIREFOX_VERSION: &str = "128.5.1";
+const CHECKSUM: &str = "476d71ff45a7178301081191d1b4c47fb21b42618f12191605f95ad48603b84a9150cb5c96f668751a43c8f6a4a43ecf337d38007d8e2b546f006faead2d66d5";
 
 fn build_spidermonkey() -> Result<PathBuf> {
     let out_dir = build_dir();
@@ -59,11 +60,10 @@ fn build_spidermonkey() -> Result<PathBuf> {
 
     let download_path = out_dir.join("firefox.tar.xz");
 
-    let already_downloaded = download_path.exists()
-        && blake3::hash(&fs::read(&download_path)?)
-            .to_hex()
-            .to_string()
-            == CHECKSUM;
+    let already_downloaded = download_path.exists() && {
+        let hash = Sha512::digest(&fs::read(&download_path)?);
+        base16ct::lower::encode_string(&hash) == CHECKSUM
+    };
 
     if !already_downloaded {
         if !Command::new("curl")
@@ -106,7 +106,7 @@ fn build_spidermonkey() -> Result<PathBuf> {
             "--disable-shared-js",
             "--disable-export-js",
             "--disable-tests",
-            "--enable-debug",
+            // "--enable-debug",
         ])
         .current_dir(&build_path)
         .status()?
@@ -158,6 +158,7 @@ const ALLOWLIST_TYPES: &[&str] = &[
     "JS::SelfHostedWriter",
     "JS::Value",
     "JS::Realm",
+    // "JS::SourceText",
     "js::GenericPrinter",
     "js::JSONPrinter",
 ];
@@ -194,7 +195,7 @@ fn generate_bindings<P: AsRef<Path>>(path: P) -> Result<()> {
             "-w",
             "-x",
             "c++",
-            "-DDEBUG=1",
+            // "-DDEBUG=1",
         ])
         .enable_cxx_namespaces()
         .allowlist_recursively(false);

@@ -17,8 +17,9 @@ libz-sys = { version = "1.1.20", default-features = false, features = ["zlib-ng"
 
 [build-dependencies]
 anyhow = "1.0.94"
+base16ct = { version = "0.2.0", features = ["std"] }
 bindgen = "0.71.1"
-blake3 = "1.5.5"
 cxx-build = "1.0.133"
+sha2 = "0.10.8"
 tar = "0.4.43"
 xz2 = "0.1.7"
