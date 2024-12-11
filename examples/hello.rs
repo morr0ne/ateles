@@ -29,7 +29,7 @@ fn main() -> Result<()> {
             bail!("Failed to create new context")
         }
 
-        if !JS::InitSelfHostedCode(cx, [0; 2], None) {
+        if !JS::InitSelfHostedCode(cx, Default::default(), None) {
             bail!("Failed to init self hosted code")
         }
 
